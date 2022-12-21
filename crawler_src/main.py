@@ -1,24 +1,16 @@
-import requests
-from bs4 import BeautifulSoup
+import sys
 
+from crawl import LinkCrawler
 
-def get_page(url):
-    try:
-        res = requests.get(url)
-    except:
-        return None
-    print(res.status_code)
-    return res
-
-
-def find_links(html_doc):
-    soup = BeautifulSoup(html_doc, 'html.parser')
-    return soup.find_all('a')
+def get_pages_data():
+    raise NotImplementedError()
 
 
 if __name__ == "__main__":
-    link = "https://paris.craigslist.org/search/hhh?lang=en&cc=gb"
-    response = get_page(link)
-    links = find_links(response.text)
-    for link in links:
-        print(link.get('href'))
+    switch = sys.argv[1]
+    if switch == 'find_links':
+        crawler = LinkCrawler(cities=['amsterdam', 'paris', 'london'])
+        crawler.start()
+
+    elif switch == 'extract_pages':
+        get_pages_data()
