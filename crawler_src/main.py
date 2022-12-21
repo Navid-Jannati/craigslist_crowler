@@ -1,6 +1,7 @@
 import sys
 
-from crawl import LinkCrawler
+from crawl import LinkCrawler, DataCrawler
+
 
 def get_pages_data():
     raise NotImplementedError()
@@ -13,4 +14,5 @@ if __name__ == "__main__":
         crawler.start()
 
     elif switch == 'extract_pages':
-        get_pages_data()
+        crawler = DataCrawler()
+        crawler.start()

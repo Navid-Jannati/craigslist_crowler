@@ -67,7 +67,7 @@ class DataCrawler(CrawlerBase):
         self.parser = AdvertisementPageParser()
 
     @staticmethod
-    def load_links():
+    def __load_links():
         with open('data/links.json', 'r') as file:
             links = json.loads(file.read())
             return links
@@ -76,3 +76,7 @@ class DataCrawler(CrawlerBase):
         for link in self.links:
             response = self.get(link)
             data = self.parser.pars(response.text)
+            print(data)
+
+    def store(self, data):
+        pass
