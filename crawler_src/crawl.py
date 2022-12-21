@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import requests
 from bs4 import BeautifulSoup
 from config import BASE_LINK
+from parser import AdvertisementPageParser
 
 
 class CrawlerBase(ABC):
@@ -14,6 +15,14 @@ class CrawlerBase(ABC):
     def store(self, data):
         pass
 
+    @staticmethod
+    def get(link):
+        try:
+            res = requests.get(link)
+        except requests.HTTPError:
+            return None
+        return res
+
 
 class LinkCrawler(CrawlerBase):
 
@@ -21,12 +30,7 @@ class LinkCrawler(CrawlerBase):
         self.cities = cities
         self.link = link
 
-    def get_page(self, url, start):
-        try:
-            res = requests.get(url + str(start))
-        except:
-            return None
-        return res
+
 
     def find_links(self, html_doc):
         soup = BeautifulSoup(html_doc, 'html.parser')
@@ -37,7 +41,7 @@ class LinkCrawler(CrawlerBase):
         crawl = True
         adv_links = list()
         while crawl:
-            response = self.get_page(url, start)
+            response = self.get(url + start)
             new_links = self.find_links(response.text)
             adv_links.extend(new_links)
             start += 120
@@ -58,4 +62,17 @@ class LinkCrawler(CrawlerBase):
 
 
 class DataCrawler(CrawlerBase):
-    pass
+    def __init__(self):
+        self.links = self.__load_links()
+        self.parser = AdvertisementPageParser()
+
+    @staticmethod
+    def load_links():
+        with open('data/links.json', 'r') as file:
+            links = json.loads(file.read())
+            return links
+
+    def start(self):
+        for link in self.links:
+            response = self.get(link)
+            data = self.parser.pars(response.text)
