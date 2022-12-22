@@ -8,11 +8,11 @@ from parser import AdvertisementPageParser
 
 class CrawlerBase(ABC):
     @abstractmethod
-    def start(self):
+    def start(self, store=False):
         pass
 
     @abstractmethod
-    def store(self, data):
+    def store(self, data, file_name=None):
         pass
 
     @staticmethod
@@ -30,8 +30,6 @@ class LinkCrawler(CrawlerBase):
         self.cities = cities
         self.link = link
 
-
-
     def find_links(self, html_doc):
         soup = BeautifulSoup(html_doc, 'html.parser')
         return soup.find_all('a', attrs={'class': 'hdrlnk'})
@@ -48,15 +46,17 @@ class LinkCrawler(CrawlerBase):
             crawl = bool(len(new_links))
         return adv_links
 
-    def start(self):
+    def start(self, store=False):
         adv_links = list()
         for city in self.cities:
             links = self.start_crawl_city(self.link.format(city))
             print(f'city: {city}, total: {len(links)}')
             adv_links.extend(links)
-        self.store([li.get('href') for li in adv_links])
+        if store:
+            self.store([li.get('href') for li in adv_links])
+        return adv_links
 
-    def store(self, data):
+    def store(self, data, *args):
         with open('data/links.json', 'w') as file:
             file.write(json.dumps(data))
 
@@ -72,11 +72,14 @@ class DataCrawler(CrawlerBase):
             links = json.loads(file.read())
             return links
 
-    def start(self):
+    def start(self, store=False):
         for link in self.links:
             response = self.get(link)
             data = self.parser.pars(response.text)
-            print(data)
+            if store:
+                self.store(data, data.get('post_id', 'sample'))
 
-    def store(self, data):
-        pass
+    def store(self, data, file_name):
+        with open(f'data/adv/{file_name}.json', 'w') as file:
+            file.write(json.dumps(data))
+        print(f'data/adv/{file_name}.json')

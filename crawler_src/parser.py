@@ -2,23 +2,54 @@ from bs4 import BeautifulSoup
 
 
 class AdvertisementPageParser:
-    def pars(self, html_data):
-        soup = BeautifulSoup(html_data, 'html.parser')
-        data = dict(
-            title=None, price=None, body=None, post_id=None,
-            created_time=None, modified_time=None
-        )
 
-        title_tag = soup.find('span', attrs={'id': 'titletextonly'})
+    def __init__(self):
+        self.soup = None
+
+    @property
+    def title(self):
+        title_tag = self.soup.find('span', attrs={'id': 'titletextonly'})
         if title_tag:
-            data['title'] = title_tag.text
+            return title_tag.text
 
-        price_tag = soup.find('span', attrs={'class': 'price'})
+    @property
+    def price(self):
+        price_tag = self.soup.find('span', attrs={'class': 'price'})
         if price_tag:
-            data['price'] = price_tag.text
+            return price_tag.text
 
-        body_tag = soup.select_one('#postingbody')
+    @property
+    def body(self):
+        body_tag = self.soup.select_one('#postingbody')
         if body_tag:
-            data['body'] = body_tag.text
+            return body_tag.text
 
+    @property
+    def post_id(self):
+        selector = 'body > section > section > section > div.postinginfos > p:nth-child(1)'
+        post_id_tag = self.soup.select_one(selector)
+        if post_id_tag:
+            # return post_id_tag.text[9:]
+            return post_id_tag.text.replace('post id: ', '')
+
+    @property
+    def created_time(self):
+        selector = 'body > section > section > section > div.postinginfos > p.postinginfo.reveal > time'
+        time_tag = self.soup.select_one(selector)
+        if time_tag:
+            return time_tag.attrs['datetime']
+
+    @property
+    def modified_time(self):
+        selector = 'body > section > section > section > div.postinginfos > p:nth-child(3) > time'
+        time_tag = self.soup.select_one(selector)
+        if time_tag:
+            return time_tag.attrs['datetime']
+
+    def pars(self, html_data):
+        self.soup = BeautifulSoup(html_data, 'html.parser')
+        data = dict(
+            title=self.title, price=self.price, body=self.body, post_id=self.post_id,
+            created_time=self.created_time, modified_time=self.modified_time
+        )
         return data
