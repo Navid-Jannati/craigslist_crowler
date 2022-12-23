@@ -50,7 +50,7 @@ class LinkCrawler(CrawlerBase):
         crawl = True
         adv_links = list()
         while crawl:
-            response = self.get(url + start)
+            response = self.get(url + str(start))
             new_links = self.find_links(response.text)
             adv_links.extend(new_links)
             start += 120
@@ -64,11 +64,11 @@ class LinkCrawler(CrawlerBase):
             print(f'city: {city}, total: {len(links)}')
             adv_links.extend(links)
         if store:
-            self.store([li.get('href') for li in adv_links])
+            self.store([{'url': li.get('href')} for li in adv_links])
         return adv_links
 
     def store(self, data, *args):
-        self.storage.store(data, 'data')
+        self.storage.store(data, 'advertisement_links')
 
 
 class DataCrawler(CrawlerBase):
@@ -91,4 +91,4 @@ class DataCrawler(CrawlerBase):
                 self.store(data, data.get('post_id', 'sample'))
 
     def store(self, data, file_name):
-        self.storage.store(data, file_name)
+        self.storage.store(data, 'advertisement_data')
