@@ -1,6 +1,6 @@
 import sys
 
-from crawl import LinkCrawler, DataCrawler
+from crawl import LinkCrawler, DataCrawler, ImageDownloader
 
 
 def get_pages_data():
@@ -15,4 +15,8 @@ if __name__ == "__main__":
 
     elif switch == 'extract_pages':
         crawler = DataCrawler()
+        crawler.start(store=True)
+
+    elif switch == 'download_images':
+        crawler = ImageDownloader()
         crawler.start(store=True)

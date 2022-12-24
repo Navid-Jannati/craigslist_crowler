@@ -64,7 +64,7 @@ class LinkCrawler(CrawlerBase):
             print(f'city: {city}, total: {len(links)}')
             adv_links.extend(links)
         if store:
-            self.store([{'url': li.get('href')} for li in adv_links])
+            self.store([{'url': li.get('href'), 'flag': False} for li in adv_links])
         return adv_links
 
     def store(self, data, *args):
@@ -73,22 +73,61 @@ class LinkCrawler(CrawlerBase):
 
 class DataCrawler(CrawlerBase):
     def __init__(self):
+        super().__init__()
         self.links = self.__load_links()
         self.parser = AdvertisementPageParser()
-        super().__init__()
 
-    @staticmethod
-    def __load_links():
-        with open('data/links.json', 'r') as file:
-            links = json.loads(file.read())
-            return links
+    def __load_links(self):
+        return self.storage.load('advertisement_links', {'flag': False})
 
     def start(self, store=False):
         for link in self.links:
-            response = self.get(link)
+            response = self.get(link['url'])
             data = self.parser.pars(response.text)
             if store:
                 self.store(data, data.get('post_id', 'sample'))
 
+            self.storage.update_flag(link)
+            print(link)
+
     def store(self, data, file_name):
         self.storage.store(data, 'advertisement_data')
+
+
+class ImageDownloader(CrawlerBase):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.advertisements = self.__load_advertisements()
+
+    def __load_advertisements(self):
+        return self.storage.load('advertisement_data')
+
+    @staticmethod
+    def get(link):
+        try:
+            response = requests.get(link, stream=True)
+        except requests.HTTPError:
+            return None
+        return response
+
+    def start(self, store=True):
+        for advertisement in self.advertisements:
+            for image in advertisement['images']:
+                counter = 0
+                response = self.get(image['url'])
+                if store:
+                    self.store(response, advertisement['post_id'], counter)
+                counter += 1
+
+    def store(self, data, adv_id, img_number):
+        file_name = f'{adv_id}-{img_number}'
+        return self.save_to_disk(data, file_name)
+
+    def save_to_disk(self, response, file_name):
+        with open(f'data/images/{file_name}.jpg', 'ab') as f:
+            f.write(response.content)
+            for _ in response.iter_content():
+                f.write(response.content)
+
+        print(file_name)
+        return file_name
